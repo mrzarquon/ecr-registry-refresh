@@ -12,3 +12,12 @@ vscode:
   extensions:
     - ms-python.python
     - ms-azuretools.vscode-docker
+
+github:
+  prebuilds:
+    master: true
+    branches: false
+    pullRequests: true
+    addComment: true
+    addBadge: true
+    addLabel: prebuilt-in-gitpod
