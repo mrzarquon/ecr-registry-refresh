@@ -65,22 +65,29 @@ def main():
     data = extract_config(api_response.data)
 
     if server in data['auths'].keys():
-        print(f'{server} has a secret, lets update it')
+        print(f'Secret: {secret} has the ECR entry: {server}')
+        print(f'Secret: {secret} being refreshed')
         data['auths'][server]['password'] = get_ecr_token()
         new_auth = encode64(f"aws:{data['auths'][server]['password']}")
         data['auths'][server]['auth'] = new_auth
 
-
-    patch = {
-        'data' : {
-            '.dockerconfigjson':
-                encode64(json.dumps(data))
+        patch = {
+            'data' : {
+                '.dockerconfigjson':
+                    encode64(json.dumps(data))
+            }
         }
-    }
 
-    patch_secret = v1.patch_namespaced_secret(secret,'gitpod', patch)
+        patch_secret = v1.patch_namespaced_secret(secret,'gitpod', patch)
 
-    pprint(patch_secret)
+        updated_secret = v1.read_namespaced_secret(secret, 'gitpod')
+
+        patched = extract_config(updated_secret.data)
+
+        if data['auths'][server]['password'] == patched['auths'][server]['password']:
+            print(f"Secret: {secret} successfully updated")
+        else:
+            print(f"Secret: {secret} was not updated")
 
 
 if __name__ == '__main__':
