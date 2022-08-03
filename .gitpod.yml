@@ -3,6 +3,7 @@ tasks:
     before: |
       export POETRY_VIRTUALENVS_IN_PROJECT=true
     init: |
+      pyenv install 3.9.13
       curl -sSL https://install.python-poetry.org | python3 -
       /home/gitpod/.local/bin/poetry install
     command: |

@@ -52,13 +52,13 @@ def main():
     secret = settings['secret-name']
     debug = settings['debug']
 
-    v1 = client.CoreV1Api()
-
     if debug:
+        print('in debug mode')
         config.load_config()
     else:
         config.load_incluster_config()
 
+    v1 = client.CoreV1Api()
     
     api_response = v1.read_namespaced_secret(secret, 'gitpod')
     

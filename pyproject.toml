@@ -5,9 +5,10 @@ description = ""
 authors = ["Chris Barker <github@mrz.angrydome.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-kubernetes = "^24.2.0"
-boto3 = "^1.24.44"
+python = "^3.9"
+kubernetes = "^24.2"
+boto3 = "^1.24"
+awscli = "^1.25"
 
 [tool.poetry.dev-dependencies]
 
