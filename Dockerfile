@@ -1,17 +1,27 @@
+# syntax=docker/dockerfile:1.4
+
 ARG ALPINE_VERSION=3.16
 
 FROM python:3.9.13-alpine AS requirements
 
+RUN apk add --no-cache bash
+
 ENV PYTHONDONTWRITEBYTECODE 1
 
-RUN python -m pip install --quiet -U pip poetry
+WORKDIR /app
+
+RUN python -m venv .venv && .venv/bin/pip install --no-cache-dir -U pip poetry
 
 WORKDIR /src
 
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
-RUN poetry export --quiet --no-interaction -f requirements.txt --without-hashes -o /src/requirements.txt
+RUN /app/.venv/bin/poetry export --quiet --no-interaction -f requirements.txt --without-hashes -o /app/requirements.txt
+
+WORKDIR /app
+
+RUN /app/.venv/bin/pip install --no-cache-dir -r requirements.txt && find /app/.venv \( -type d -a -name test -o -name tests \) -o \( -type f -a -name '*.pyc' -o -name '*.pyo' \) -exec rm -rf '{}' \+
 
 FROM python:3.10.5-alpine${ALPINE_VERSION} as aws-builder
 
@@ -40,15 +50,12 @@ FROM python:3.9.13-alpine AS runtime
 COPY --from=aws-builder /usr/local/aws-cli/ /usr/local/aws-cli/
 COPY --from=aws-builder /aws-cli-bin/ /usr/local/bin/
 
-# now we use multistage containers to then copy the requirements from the other container
-COPY --from=requirements /src/requirements.txt .
+WORKDIR /app
 
-# now we're *just* deploying the needed packages for whatever was in the poetry setup
-RUN python -m pip install --quiet -U pip
-RUN pip install -r requirements.txt
+COPY --from=requirements /app /app
 
 COPY main.py /app/main.py
 
-WORKDIR /app/
+ENV PATH="/app/.venv/bin:$PATH"
 
-ENTRYPOINT ["python /app/main.py"]
+ENTRYPOINT ["python","/app/main.py"]

@@ -1,0 +1,26 @@
+    - metadata:
+        name: ecr-helper
+        namespace: gitpod
+      attachPolicy:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Sid: AllowPushPull
+          Action:
+          - "ecr:BatchCheckLayerAvailability"
+          - "ecr:GetDownloadUrlForLayer"
+          - "ecr:GetRepositoryPolicy"
+          - "ecr:DescribeRepositories"
+          - "ecr:ListImages"
+          - "ecr:DescribeImages"
+          - "ecr:BatchGetImage"
+          - "ecr:InitiateLayerUpload"
+          - "ecr:UploadLayerPart"
+          - "ecr:CompleteLayerUpload"
+          - "ecr:PutImage"
+          Resource: "arn:aws:ecr:eu-west-1:691173103445:repository/workspace-*"
+        - Effect: Allow
+          Sid: GetAuthorizationToken
+          Action:
+          - "ecr:GetAuthorizationToken"
+          Resource: "*"
