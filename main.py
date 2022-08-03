@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import boto3
 import base64
 import json
@@ -24,8 +26,13 @@ def encode64(decoded: str) -> str:
 
 def get_env_vars() -> dict:
     vars = {}
-    vars['server'] = os.environ['ECR_SERVER']
+    vars['server'] = os.environ['ECR_HELPER_SERVER']
     vars['secret-name'] = os.environ['GITPOD_REG_SECRET_NAME']
+    if "ECR_HELPER_DEBUG" in os.environ.keys(): 
+        vars['debug'] = str2bool(os.environ['ECR_HELPER_DEBUG'])
+    else:
+        vars['debug'] = False
+
     return vars
 
 def get_ecr_token() -> str:
@@ -34,15 +41,25 @@ def get_ecr_token() -> str:
     token = auth_data['authorizationData'][0]['authorizationToken']
     return token
 
+def str2bool(v):
+  return v.lower() in ("yes", "true", "t", "1")
+
+
 def main():
-    config.load_config()
 
     settings = get_env_vars()
 
     server = settings['server']
     secret = settings['secret-name']
+    debug = settings['debug']
 
     v1 = client.CoreV1Api()
+
+    if debug:
+        config.load_config()
+    else:
+        config.load_incluster_config()
+
     
     api_response = v1.read_namespaced_secret(secret, 'gitpod')
     
@@ -62,9 +79,9 @@ def main():
         }
     }
 
-    pprint(patch)
-
     patch_secret = v1.patch_namespaced_secret(secret,'gitpod', patch)
+
+    pprint(patch_secret)
 
 
 if __name__ == '__main__':
