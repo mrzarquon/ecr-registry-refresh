@@ -1,3 +1,40 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: ecr-registry-helper
+  namespace: gitpod
+spec:
+  schedule: "0 */10 * * *"
+  successfulJobsHistoryLimit: 3
+  suspend: false
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: ecr-helper
+          containers:
+          - name: ecr-registry-helper
+            image: odaniait/aws-kubectl:latest
+            imagePullPolicy: IfNotPresent
+            envFrom:
+              - secretRef:
+                  name: ecr-registry-helper-secrets
+              - configMapRef:
+                  name: ecr-registry-helper-cm
+            command:
+              - /bin/sh
+              - -c
+              - |-
+                ECR_TOKEN=`aws ecr get-login-password --region ${AWS_REGION}`
+                NAMESPACE_NAME=health-check
+                kubectl delete secret --ignore-not-found $DOCKER_SECRET_NAME -n $NAMESPACE_NAME
+                kubectl create secret docker-registry $DOCKER_SECRET_NAME \
+                --docker-server=https://${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com \
+                --docker-username=AWS \
+                --docker-password="${ECR_TOKEN}" \
+                --namespace=$NAMESPACE_NAME
+                echo "Secret was successfully updated at $(date)"
+          restartPolicy: Never
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -7,23 +44,20 @@ metadata:
 rules:
 - apiGroups: [""]
   resources: ["secrets"]
-  resourceNames: ["regcred"]
+  resourceNames: ["test-secret"]
   verbs: ["patch"]
-- apiGroups: [""]
-  resources: ["secrets"]
-  verbs: ["create"]
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: health-check-role-binding
+  name: ecr-helper-role-binding
   namespace: gitpod
 subjects:
 - kind: ServiceAccount
-  name: sa-health-check
-  namespace: health-check
+  name: ecr-helper
+  namespace: gitpod
   apiGroup: ""
 roleRef:
   kind: Role
-  name: role-full-access-to-secrets
+  name: ecr-helper-access-secrets
   apiGroup: ""
