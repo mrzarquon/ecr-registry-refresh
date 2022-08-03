@@ -9,7 +9,6 @@ from kubernetes import client, config
 from pprint import pprint
 
 
-
 def extract_config(data: str) -> dict:
     config_dict = json.loads(decode64(data['.dockerconfigjson']))
     return config_dict
