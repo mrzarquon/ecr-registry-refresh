@@ -15,11 +15,13 @@ RUN poetry export --quiet --no-interaction -f requirements.txt --without-hashes 
 
 FROM python:3.10.5-alpine${ALPINE_VERSION} as aws-builder
 
+WORKDIR /src
+
 ARG AWS_CLI_VERSION=2.7.21
 RUN apk add --no-cache git unzip groff build-base libffi-dev cmake
 RUN git clone --single-branch --depth 1 -b ${AWS_CLI_VERSION} https://github.com/aws/aws-cli.git
 
-WORKDIR aws-cli
+WORKDIR /src/aws-cli
 RUN sed -i'' 's/PyInstaller.*/PyInstaller==5.2/g' requirements-build.txt
 RUN python -m venv venv
 RUN . venv/bin/activate
