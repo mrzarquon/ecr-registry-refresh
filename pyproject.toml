@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "ecr-registry-refresh"
+version = "0.1.0"
+description = ""
+authors = ["Chris Barker <github@mrz.angrydome.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+kubernetes = "^24.2.0"
+boto3 = "^1.24.44"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
