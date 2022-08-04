@@ -3,7 +3,7 @@ GIT_SHA := $(shell git rev-parse --short HEAD)
 build:
 	docker build -t ghcr.io/mrzarquon/ecr-refresh:${GIT_SHA} .
 
-push: 
+push: build
 	docker image tag ghcr.io/mrzarquon/ecr-refresh:${GIT_SHA} ghcr.io/mrzarquon/ecr-refresh:latest
 	docker image push ghcr.io/mrzarquon/ecr-refresh:${GIT_SHA}
 	docker image push ghcr.io/mrzarquon/ecr-refresh:latest

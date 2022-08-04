@@ -1,0 +1,21 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: ecr-registry-helper
+  namespace: gitpod
+spec:
+  schedule: "0 */10 * * *"
+  successfulJobsHistoryLimit: 3
+  suspend: false
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: ecr-helper
+          containers:
+          - name: ecr-refresh
+            image: ghcr.io/mrzarquon/ecr-refresh:latest
+            imagePullPolicy: IfNotPresent
+            command:
+              - /app/.venv/bin/python /app/main.py
+          restartPolicy: Never

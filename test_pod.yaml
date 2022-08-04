@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ecr-helper-debug
+  namespace: gitpod
+  labels:
+    app: ecr-helper
+spec:
+  serviceAccountName: ecr-helper
+  containers:
+  - image: ghcr.io/mrzarquon/ecr-refresh:latest
+    env:
+    - name: ECR_HELPER_SERVER
+      value: "691173103445.dkr.ecr.eu-west-1.amazonaws.com"
+    - name: ECR_HELPER_DEBUG
+      value: "true"
+    - name: GITPOD_REG_SECRET_NAME
+      value: "container-registry"
+    command:
+      - "sleep"
+      - "604800"
+    imagePullPolicy: Always
+    name: ecr-refresh
+  restartPolicy: Always

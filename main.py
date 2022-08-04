@@ -31,6 +31,11 @@ def get_env_vars() -> dict:
         vars['debug'] = str2bool(os.environ['ECR_HELPER_DEBUG'])
     else:
         vars['debug'] = False
+    
+    if "ECR_HELPER_STDOUT" in os.environ.keys(): 
+        vars['conf_out'] = str2bool(os.environ['ECR_HELPER_STDOUT'])
+    else:
+        vars['conf_out'] = False
 
     return vars
 
@@ -51,9 +56,11 @@ def main():
     server = settings['server']
     secret = settings['secret-name']
     debug = settings['debug']
+    conf_out = settings['conf_out']
 
     if debug:
-        print('in debug mode')
+        if not conf_out:
+            print('in debug mode')
         config.load_config()
     else:
         config.load_incluster_config()
@@ -65,11 +72,14 @@ def main():
     data = extract_config(api_response.data)
 
     if server in data['auths'].keys():
-        print(f'Secret: {secret} has the ECR entry: {server}')
-        print(f'Secret: {secret} being refreshed')
-        data['auths'][server]['password'] = get_ecr_token()
-        new_auth = encode64(f"aws:{data['auths'][server]['password']}")
-        data['auths'][server]['auth'] = new_auth
+        
+        if not conf_out:
+            print(f'Secret: {secret} has the ECR entry: {server}')
+            print(f'Secret: {secret} being refreshed')
+        
+        data['auths'][server]['auth'] = get_ecr_token()
+        new_password = decode64(data['auths'][server]['auth'])
+        data['auths'][server]['password'] = new_password.split(":")[1]
 
         patch = {
             'data' : {
@@ -78,16 +88,19 @@ def main():
             }
         }
 
-        patch_secret = v1.patch_namespaced_secret(secret,'gitpod', patch)
-
-        updated_secret = v1.read_namespaced_secret(secret, 'gitpod')
-
-        patched = extract_config(updated_secret.data)
-
-        if data['auths'][server]['password'] == patched['auths'][server]['password']:
-            print(f"Secret: {secret} successfully updated")
+        if conf_out:
+            print(json.dumps(data))
         else:
-            print(f"Secret: {secret} was not updated")
+            patch_secret = v1.patch_namespaced_secret(secret,'gitpod', patch)
+
+            updated_secret = v1.read_namespaced_secret(secret, 'gitpod')
+
+            patched = extract_config(updated_secret.data)
+
+            if data['auths'][server]['password'] == patched['auths'][server]['password']:
+                print(f"Secret: {secret} successfully updated")
+            else:
+                print(f"Secret: {secret} was not updated")
 
 
 if __name__ == '__main__':
